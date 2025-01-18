@@ -20,14 +20,15 @@ class WeatherController extends Controller
         $latitude = $request->input('latitude');
         $longitude = $request->input('longitude');
 
-        $response = Http::get(self::BASE_URL, [
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-            'daily' => 'weather_code,temperature_2m_max,temperature_2m_min,sunshine_duration',
-        ]);
-
-        if($response->failed()) {
-            return response()->json(['error' => 'Failed to fetch weather data.']);
+        // Try to get response from external api, if failed return error json
+        try {
+            $response = Http::get(self::BASE_URL, [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'daily' => 'weather_code,temperature_2m_max,temperature_2m_min,sunshine_duration',
+            ])->throw();
+        } catch(\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch weather data.'], 500);
         }
 
         $data = $response->json();
