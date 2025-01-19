@@ -69,7 +69,7 @@ class WeatherController extends Controller
                 'longitude' => $longitude,
                 'daily' => 'sunshine_duration,temperature_2m_max,temperature_2m_min,weather_code',
                 'hourly' => 'surface_pressure'
-            ]);
+            ])->throw();
         } catch(\Exception $e) {
             return response()->json(['error' => 'Failed to fetch weather data.'], 500);
         }
