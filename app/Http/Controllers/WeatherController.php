@@ -53,4 +53,49 @@ class WeatherController extends Controller
 
         return response()->json($result);
     }
+
+    public function weeklySummary(Request $request) {
+        $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $latitude = $request->input('latitude');
+        $longitude = $request->input('longitude');
+
+        try {
+            $response = Http::get(self::BASE_URL, [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'daily' => 'sunshine_duration,temperature_2m_max,temperature_2m_min,weather_code',
+                'hourly' => 'surface_pressure'
+            ]);
+        } catch(\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch weather data.'], 500);
+        }
+
+        $data = $response->json();
+        $daily = $data['daily'];
+        $hourly = $data['hourly'];
+
+        // Calculations
+        $avgPressure = array_sum($hourly['surface_pressure']) / count($hourly['surface_pressure']);
+        $avgSunshine = array_sum($daily['sunshine_duration']) / count($daily['sunshine_duration']);
+        $minTemp = min($daily['temperature_2m_min']);
+        $maxTemp = max($daily['temperature_2m_max']);
+
+        $rainyDays = count(array_filter($daily['weather_code'], function($code) {
+            return $code >= 50 && $code < 100; // Codes representing rain, drizzle, snow, thunderstorms
+        }));
+
+        $summary = $rainyDays >= 4 ? 'z opadami' : 'bez opadów';
+
+        return response()->json([
+            'avg_pressure' => round($avgPressure, 2),
+            'avg_sunshine' => round($avgSunshine, 2),
+            'min_temp' => $minTemp,
+            'max_temp' => $maxTemp,
+            'weekly_summary' => $summary,
+        ]);
+    }
 }

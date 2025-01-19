@@ -16,4 +16,4 @@ use App\Http\Controllers\WeatherController;
 */
 
 Route::get('/forecast', [WeatherController::class, 'sevenDayForecast']);
-
+Route::get('/weeklySummary', [WeatherController::class, 'weeklySummary']);
